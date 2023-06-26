@@ -46,27 +46,27 @@ Create VPN attachments:
 # Step 5: 
 Download connection parameters from the VPN Site To Site Connection for the appropriate attachment.  
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/DownloadConfiguration.png)  
-We have completed the AWS side. We've configured the endpoints that the Customer can connect to. We've downloaded the configuration information for those endpoints.  
-
-The On Prem setup has 2 layers  - the IPsec and the BGP layer. We are now going to configure StrongSwan for IPsec. 
-The on prem router that came with the CF template in this exercise came preinstalled with Strongswan software. 
-In the real world we will need to install the IPN solution ourselves and configure it based on the downloaded file. Make sure to pick the correct configuration based on the chosen vendor. 
-# Step 6: Configure Strongswan in the following step by modifying the files. 
+- The AWS side is now complete. We've configured the endpoints that the Customer can connect to. We've downloaded the configuration information for those endpoints.  
+- The On Prem setup has 2 layers  - the IPsec and the BGP layer. We are now going to configure StrongSwan for IPsec. 
+- The On Prem router that came with the CF template in this exercise came preinstalled with Strongswan software. In the real world we will need to install the IPN solution ourselves and configure it based on the downloaded file. Make sure to pick the correct configuration based on the chosen vendor. 
+# Step 6: 
+Configure Strongswan  
 ```ipsec.conf``` contains the actual configuration for the IPsec tunnels.  
 ```ipsec.secrets``` has the authentication information that this linux server will use to authenticate against aws.  
 ```ipsec-vti.sh ```script file - this will enable and disable the IPsec tunnel whenever the system detects traffic.  
 
-These files need to be edited using parameters from the downloaded config files. This needs to be done carefully where the AWS inside ip address, AWS outside IP address, shared secret for the phase 1 IPsec tunnel is substituted correctly. After this is complete and the script is run, IKE Phase 1 tunnel gets setup and the ipsec-vti.sh script will enable and disable the IKE phase 2 IPsec tunnel whenever the system detects traffic.  
+- These files need to be edited using parameters from the downloaded config files.
+- This needs to be done carefully where the AWS inside ip address, AWS outside IP address, shared secret for the phase 1 IPsec tunnel is substituted correctly. 
+- After this is complete and the script is run, IKE Phase 1 tunnel gets setup and the ipsec-vti.sh script will enable and disable the IKE phase 2 IPsec tunnel whenever the system detects traffic.  
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/restartStrongSwan.png)  
-
-Restart strongswan will bring both the IPsec tunnels from the Customer side to the AWS side. After everything has been configured and after Strongswan has been rebooted, two vti interfaces would show up on ifconfig.  
+``` systemctl restart strongswan``` will bring both the IPsec tunnels from the Customer side to the AWS side. After everything has been configured and after Strongswan has been rebooted, two vti interfaces would show up on ```ifconfig```.  
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/StrongSwanConfigComplete.png) 
 
-Now if we check Site to Site VPN we should see that their ```IPSEC IS UP```. This means these tunnels are active and that connectivity from On Prem routers to our VPC is working and we can use these tunnels to establish BGP sessions and route traffic through them. 
+Now if we check Site to Site VPN we should see that their ```IPSEC IS UP```. This means these tunnels are active and that connectivity from On Prem routers to our VPC is working and we can use these tunnels to establish BGP sessions and route traffic through them.  
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/ipSecIsUp.png) 
 
 # Step 7:  
-In order to configure BGP to run on top of these tunnels, install FRR in Router1 and Router.
+In order to configure BGP to run on top of these tunnels, install FRR on both routers.
 SSH into Router 1. The router that came with the one click deployment came already setup with the script. Again in real world scenario, we would need to do install this ourselves.  
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/installffrouting.png) 
 
