@@ -19,16 +19,16 @@ A Site to Site VPN has the following components:
 **Common to both sides:** The tunnel through which data flows. 
 
 # Steps : 
-1. Deploy the AWS VPC and a simulated On Prem Customer network using one click CF deployment. Afterb this is setup, there is no connection between the AWS VPC and the On Prem environment which we will verify prior to setting up the VPN connection. [Details](#Step1)
+1. Deploy the AWS VPC and a simulated On Prem Customer network using one click CF deployment. After setup, there is no connection between the AWS VPC and the On Prem environment which we will verify prior to setting up the VPN connection. [Details](#Step1)
 2. Create the Customer Gateway which is the logical connection that represent the physical Customer Router. These connections tell AWS how to connect to the routers using public IP addressing. Since there are 2 Physical Routers on the Customer side, there needs to be 2 Customer Gateways. [Details](#Step2)
 3. Verify there is no connection between the VPC and Customer network. [Details](#Step3)
-4. Create the VPN attachments which provide 2 endpoints. There is already 1 Transit Gateway attachment that connects the TGW to the AWS VPC. For the 2 new ones we will select the accelerated VPN  option. This creates 2 accelerated endpoints per connection. These endpoints provide transit back to the AWS network via the AWS global network. The effect of this is that we will have two Site to Site VPN connections which can be used to connect the VPN endpoints to the On Premises router using IPsec tunnels, 2 per connection. [Details](#Step4)
+4. Create the VPN attachments which provide 2 endpoints. There is already 1 Transit Gateway attachment that connects the TGW to the AWS VPC. For the 2 new ones we will select the accelerated VPN option. This creates 2 accelerated endpoints per connection. These endpoints provide transit back to the AWS network via the AWS global network. The effect of this is that we will have two Site to Site VPN connections which can be used to connect the VPN endpoints to the On Premises router using IPsec tunnels, 2 per connection. [Details](#Step4)
 5. Download the configuration parameters for the Site To Site VPN connections. Each of these correspond to one Customer Gateway. This is needed to set up the Strongswan VPN appliance. Extract IP address, shared secret and other relevant information from the configuration files. This is needed to configure the VPN tunnels and to configure BGP. Tunnels are created using the same pre shared key. This key is one of the configuration parameters in the downloaded file. Inside the tunnels - here the internal IP addresses are used. This is where BGP traffic runs and this is the tunnel through which data is transmitted.
-To emphasise: Outside tunnel refers to the encrypted data stream between both parties. Inside Tunnel refers to the routing and the raw data that is transmitted. Each Customer Gateway connects to two endpoints on the AWS side for high availability which has one tunnel each. Extract values from the configuration file. The inside IP, outside IP, shared secret etc. [Details](#Step5)
+To emphasise: Outside tunnel refers to the encrypted data stream between both parties, the IKE phase 1 tunnel. Inside Tunnel refers to the routing and the raw data that is transmitted, the IKE Phase 2 tunnel. Each Customer Gateway connects to two endpoints on the AWS side for high availability which has one tunnel each. Extract values from the configuration file. The inside IP, outside IP, shared secret etc. [Details](#Step5)
 6. Configure Strongswan using these parameters. Make sure both VPN connections are available.
 The resources (ONPREM-ROUTER1 and ONPREM-ROUTER2) that were deployed using the one click deployment script already came with scripts used to configure Strongswan. In the real world we would have to install a VPN solution ourselves. Modify the files and copy them to the /etc directory where they will be read by the strongswan software. Restart strongswan. After the setup we should be able to see two virtual tunnel interfaces. This means that the tunnel interfaces are active and are connected to aws. Do the same for ONPREM-ROUTER2. After this is complete we should see that IPSEC is UP for both tunnels in Both Site-to-Site VPNS. [Details](#Step6)
-7. Configure BGP to run on top of the IPsec tunnels and establish connectivity between the two parties. This is done using FRR, Free Range Routing which provides a solution for routing protocol implementations, in our case BGP. This is how we are configuring dynamic routing between the networks. FRR exchanges routing information with other routers in the network, enabling efficicient and dynamic route propagation. [Details](#Step7)
-8. Once the BGP configuration is done and we can ping each other from both sides. [Details](#Step8)
+7. Configure BGP to run on top of the IPsec tunnels and establish connectivity between the two parties. This is done using FRR, Free Range Routing which provides a solution for routing protocol implementations, in our case BGP. This is how we are configuring dynamic routing between the networks. FRR exchanges routing information with other routers in the network, enabling efficient and dynamic route propagation. [Details](#Step7)
+8. Once the BGP configuration is done we can ping each other from both sides. [Details](#Step8)
 
 # Detailed implementation steps:
 # Step1: 
@@ -57,7 +57,7 @@ Configure Strongswan
 
 - These files need to be edited using parameters from the downloaded config files.
 - This needs to be done carefully where the AWS inside ip address, AWS outside IP address, shared secret for the phase 1 IPsec tunnel is substituted correctly. 
-- After this is complete and the script is run, IKE Phase 1 tunnel gets setup and the ipsec-vti.sh script will enable and disable the IKE phase 2 IPsec tunnel whenever the system detects traffic.  
+- After this is complete and the script is run, IKE Phase 1 tunnel gets setup and the ipsec-vti.sh script will enable the IKE phase 2 IPsec tunnel whenever the system detects traffic and tear it down when there is no interesting traffic.
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/restartStrongSwan.png)  
 ``` systemctl restart strongswan``` will bring both the IPsec tunnels from the Customer side to the AWS side. After everything has been configured and after Strongswan has been rebooted, two vti interfaces would show up on ```ifconfig```.  
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/StrongSwanConfigComplete.png) 
@@ -81,7 +81,7 @@ It will now start exchanging routes with the Transit Gateway in the VPC.
 Now on```show ip route``` the VPC ip address is displayed.  
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/bgpConfigComplete.png)  
 
-Now to make sure pings are working from both sides, Log on to VPC EC2 server and ping On Prem server.  
+Now to make sure pings are working from both sides, log on to VPC EC2 server and ping On Prem server.  
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/pingVPCFromOnPrem.png)  
 
 Log on to On Prem server and ping VPC EC2:  
