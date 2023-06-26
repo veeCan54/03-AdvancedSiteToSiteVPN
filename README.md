@@ -36,7 +36,7 @@ When the one click deployment is complete we have the VPC created, with CIDR 10.
 The On Prem CIDR is 192.168.8.0/21	
 # Step 2:
 Create Customer Gateway Objects  
-![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/03-AdvancedSiteToSiteVPN/images/CustomerGatewayAdded.png) 
+![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/CustomerGatewayAdded.png) 
 # Step 3:  
 Verify connectivity. There is no connectivity. 
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/PingBeforeConnect.png) 
@@ -55,31 +55,40 @@ In the real world we will need to install the IPN solution ourselves and configu
 ```ipsec.conf``` contains the actual configuration for the ipsec tunnels.  
 ```ipsec.secrets``` has the authentication information that this linux server will use to authenticate against aws.  
 ```ipsec-vti.sh ```script file - this will enable and disable the ipsec tunnel whenever the system detects traffic.  
+
 Now we edit these config files with parameters from the downloaded config files. This needs to be done carefully where we replace the AWS inside ip address, AWS outside IP address, shared secret for the phase 1 IPSEC tunnel etc. After this is complete, IKE Phase 1 tunnel gets setup and the ipsec-vti.sh script will enable and disable the IKE phase 2 ipsec tunnel whenever the system detects traffic.  
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/restartStrongSwan.png)  
+
 Restart strongswan will bring both the IPsec tunnels from the Customer side to the AWS side. After everything has been configured and after Strongswan has been rebooted, two vti interfaces would show up on ifconfig.  
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/StrongSwanConfigComplete.png) 
-Now if we check Site to Site VPN we should see that their ```IPSEC IS UP``. This means these tunnels are active and that connectivity from On Prem routers to our VPC is working and we can use these tunnels to establish BGP sessions and route traffic through them. 
 
+Now if we check Site to Site VPN we should see that their ```IPSEC IS UP```. This means these tunnels are active and that connectivity from On Prem routers to our VPC is working and we can use these tunnels to establish BGP sessions and route traffic through them. 
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/ipSecIsUp.png) 
+
 # Step 7: Now we will configure BGP to run on top of these tunnels. 
 1. Install FRR in Router1 and Router 
 2. Then we will configure BGP which will share routing information to aws servers. 
 SSH into Router 1. The router that came with the one click deployment came already setup with the script. Again in real world scenario, we would need to do install this ourselves.  
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/installffrouting.png) 
+
 After the script is run, we see that this is complete. 
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/installFrrComplete.png) 
 # Step 8: 
 Now we proceed to configure BGP.  
+
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/configureBGP.png) 
+
 Once the Router is back it will be functioning as both an IPSEC endpoint and a BGP endpoint. 
 It will now start exchanging routes with the Transit Gateway that we have setup. 
-Now when we do ```show ip route``` we see that it now has the ip address of our VPC.  
+Now on```show ip route``` the ip address of our VPC is displayed. 
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/bgpConfigComplete.png)  
+
 Now to make sure pings are working from both sides, Log on to VPC EC2 server and ping on prem server.  
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/pingVPCFromOnPrem.png)  
+
 Log on to On prem server and ping VPC EC2:  
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/pingOnPremFromVPC.png) 
+
 Repeat Step 7 again for Router 2 and verify that the ping is working. 
 
 
