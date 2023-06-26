@@ -44,19 +44,19 @@ Verify connectivity. There is no connectivity.
 Create VPN attachments:  
  ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/TransitGatewayAttachment.png) 
 # Step 5: 
-Download connection parameters from the VPn Site To Site Connection for the appropriate attachment.  
+Download connection parameters from the VPN Site To Site Connection for the appropriate attachment.  
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/DownloadConfiguration.png)  
 We have completed the AWS side. We've configured the endpoints that the Customer can connect to. We've downloaded the configuration information for those endpoints.  
-The on Prem has 2 layers  - the IP sec and the BGP layer.
-We are now going to configure StrongSwan
-The on prem router that came with the CF template in this exercise came preinstalled with Strongswan software. 
-In the real world we will need to install the IPN solution ourselves and configure it based on the downloaded file. There are different Vendors we can choose from.  
-# Step 6: We configure it in the following step by modifying the files. 
-```ipsec.conf``` contains the actual configuration for the ipsec tunnels.  
-```ipsec.secrets``` has the authentication information that this linux server will use to authenticate against aws.  
-```ipsec-vti.sh ```script file - this will enable and disable the ipsec tunnel whenever the system detects traffic.  
 
-Now we edit these config files with parameters from the downloaded config files. This needs to be done carefully where we replace the AWS inside ip address, AWS outside IP address, shared secret for the phase 1 IPSEC tunnel etc. After this is complete, IKE Phase 1 tunnel gets setup and the ipsec-vti.sh script will enable and disable the IKE phase 2 ipsec tunnel whenever the system detects traffic.  
+The On Prem setup has 2 layers  - the IPsec and the BGP layer. We are now going to configure StrongSwan for IPsec. 
+The on prem router that came with the CF template in this exercise came preinstalled with Strongswan software. 
+In the real world we will need to install the IPN solution ourselves and configure it based on the downloaded file. Make sure to pick the correct configuration based on the chosen vendor. 
+# Step 6: Configure Strongswan in the following step by modifying the files. 
+```ipsec.conf``` contains the actual configuration for the IPsec tunnels.  
+```ipsec.secrets``` has the authentication information that this linux server will use to authenticate against aws.  
+```ipsec-vti.sh ```script file - this will enable and disable the IPsec tunnel whenever the system detects traffic.  
+
+These files need to be edited using parameters from the downloaded config files. This needs to be done carefully where the AWS inside ip address, AWS outside IP address, shared secret for the phase 1 IPsec tunnel is substituted correctly. After this is complete and the script is run, IKE Phase 1 tunnel gets setup and the ipsec-vti.sh script will enable and disable the IKE phase 2 IPsec tunnel whenever the system detects traffic.  
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/restartStrongSwan.png)  
 
 Restart strongswan will bring both the IPsec tunnels from the Customer side to the AWS side. After everything has been configured and after Strongswan has been rebooted, two vti interfaces would show up on ifconfig.  
@@ -65,31 +65,29 @@ Restart strongswan will bring both the IPsec tunnels from the Customer side to t
 Now if we check Site to Site VPN we should see that their ```IPSEC IS UP```. This means these tunnels are active and that connectivity from On Prem routers to our VPC is working and we can use these tunnels to establish BGP sessions and route traffic through them. 
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/ipSecIsUp.png) 
 
-# Step 7: Now we will configure BGP to run on top of these tunnels. 
-1. Install FRR in Router1 and Router 
-2. Then we will configure BGP which will share routing information to aws servers. 
+# Step 7:  
+In order to configure BGP to run on top of these tunnels, install FRR in Router1 and Router.
 SSH into Router 1. The router that came with the one click deployment came already setup with the script. Again in real world scenario, we would need to do install this ourselves.  
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/installffrouting.png) 
 
-After the script is run, we see that this is complete. 
+Wait for the setup to complete.  
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/installFrrComplete.png) 
 # Step 8: 
-Now we proceed to configure BGP.  
-
+Configure BGP.  
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/configureBGP.png) 
 
-Once the Router is back it will be functioning as both an IPSEC endpoint and a BGP endpoint. 
-It will now start exchanging routes with the Transit Gateway that we have setup. 
-Now on```show ip route``` the ip address of our VPC is displayed. 
+Once the Router is back it will be functioning as both an IPsec endpoint and a BGP endpoint. 
+It will now start exchanging routes with the Transit Gateway in the VPC.
+Now on```show ip route``` the VPC ip address is displayed.  
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/bgpConfigComplete.png)  
 
-Now to make sure pings are working from both sides, Log on to VPC EC2 server and ping on prem server.  
+Now to make sure pings are working from both sides, Log on to VPC EC2 server and ping On Prem server.  
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/pingVPCFromOnPrem.png)  
 
-Log on to On prem server and ping VPC EC2:  
+Log on to On Prem server and ping VPC EC2:  
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/pingOnPremFromVPC.png) 
 
-Repeat Step 7 again for Router 2 and verify that the ping is working. 
+Repeat Step 7 to install FRR on Router 2 and configure BGP. Verify that the ping is working. 
 
 
 
