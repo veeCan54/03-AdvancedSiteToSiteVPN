@@ -1,9 +1,9 @@
 # 03-AdvancedSiteToSiteVPN
-In this lab I created and tested a VPN connection between an AWS VPC and an On Premise Customer network. <p> 
+Let us create and test a VPN connection between an AWS VPC and an On Premise Customer network. <p> 
 Architecture: The AWS VPC has 2 subnets in 2 AZs with an EC1 instance in each subnet. 
 On the Customer side there are 2 physical routers and 2 servers.
 Connection is implemented using a Transit Gateway on the AWS side with 2 VPN attachments. 
-This provides us 2 endpoints on AWS side will connect to the two Customer Routers. 
+This provides us 2 endpoints on AWS side which will connect to the two Customer Routers. 
 This provides resiliency in case of failure of a customer router or failure of an AZ on the AWS side.
 
 For practicality the customer network is simulated and is hosted on AWS. On the customer side the IPsec tunnels will be setup and configured using StrongSwan. StrongSwan is mature and widely adopted open-sourced IPsec based solution that provides secure communication and VPN capabilities. It supports various authentication methods, such as X.509 certificates, pre-shared keys, and username/password authentication. It adheres to industry standard protocols and specifications including IPsec RFCs, IKE RFCs and other relevant standards. 
@@ -26,9 +26,10 @@ A Site to Site VPN has the following components:
 5. Download the configuration parameters for the Site To Site VPN connections. Each of these correspond to one Customer Gateway. This is needed to set up the Strongswan VPN appliance. Extract IP address, shared secret and other relevant information from the configuration files. This is needed to configure the VPN tunnels and to configure BGP. Tunnels are created using the same pre shared key. This key is one of the configuration parameters in the downloaded file. Inside the tunnels - here the internal IP addresses are used. This is where BGP traffic runs and this is the tunnel through which data is transmitted.
 To emphasise: Outside tunnel refers to the encrypted data stream between both parties, the IKE phase 1 tunnel. Inside Tunnel refers to the routing and the raw data that is transmitted, the IKE Phase 2 tunnel. Each Customer Gateway connects to two endpoints on the AWS side for high availability which has one tunnel each. Extract values from the configuration file. The inside IP, outside IP, shared secret etc. [Details](#Step5)
 6. Configure Strongswan using these parameters. Make sure both VPN connections are available.
-The resources (ONPREM-ROUTER1 and ONPREM-ROUTER2) that were deployed using the one click deployment script already came with scripts used to configure Strongswan. In the real world we would have to install a VPN solution ourselves. Modify the files and copy them to the /etc directory where they will be read by the strongswan software. Restart strongswan. After the setup we should be able to see two virtual tunnel interfaces. This means that the tunnel interfaces are active and are connected to aws. Do the same for ONPREM-ROUTER2. After this is complete we should see that IPSEC is UP for both tunnels in Both Site-to-Site VPNS. [Details](#Step6)
+The resources (ONPREM-ROUTER1 and ONPREM-ROUTER2) that were deployed using the one click deployment script already came with scripts used to configure Strongswan. In the real world we would have to install a VPN solution ourselves. Modify the files and copy them to the /etc directory where they will be read by the strongswan software. Restart strongswan. After the setup we should be able to see two virtual tunnel interfaces. This means that the tunnel interfaces are active and are connected to AWS. Do the same for ONPREM-ROUTER2. After this is complete we should see that IPSEC is UP for both tunnels in Both Site-to-Site VPNS. [Details](#Step6)
 7. Configure BGP to run on top of the IPsec tunnels and establish connectivity between the two parties. This is done using FRR, Free Range Routing which provides a solution for routing protocol implementations, in our case BGP. This is how we are configuring dynamic routing between the networks. FRR exchanges routing information with other routers in the network, enabling efficient and dynamic route propagation. [Details](#Step7)
 8. Once the BGP configuration is done we can ping each other from both sides. [Details](#Step8)
+9. Clean up by deleting the resources in order and finally deleting the CF stack. 
 
 # Detailed implementation steps:
 # Step1: 
