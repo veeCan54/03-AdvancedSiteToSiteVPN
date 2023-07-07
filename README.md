@@ -1,5 +1,8 @@
-# 03-AdvancedSiteToSiteVPN
-Let us create and test a VPN connection between an AWS VPC and an On Premise Customer network. <p> 
+# Advanced Site to Site VPN. 
+**Objectives:**
+1. Create and test a VPN connection between an AWS VPC and an On Premise Customer network.
+2. Configure IPSec tunnels and understand BGP route propagation.
+   
 Architecture: The AWS VPC has 2 subnets in 2 AZs with an EC1 instance in each subnet. 
 On the Customer side there are 2 physical routers and 2 servers.
 Connection is implemented using a Transit Gateway on the AWS side with 2 VPN attachments. 
@@ -29,7 +32,8 @@ To emphasise: Outside tunnel refers to the encrypted data stream between both pa
 The resources (ONPREM-ROUTER1 and ONPREM-ROUTER2) that were deployed using the one click deployment script already came with scripts used to configure Strongswan. In the real world we would have to install a VPN solution ourselves. Modify the files and copy them to the /etc directory where they will be read by the strongswan software. Restart strongswan. After the setup we should be able to see two virtual tunnel interfaces. This means that the tunnel interfaces are active and are connected to AWS. Do the same for ONPREM-ROUTER2. After this is complete we should see that IPSEC is UP for both tunnels in Both Site-to-Site VPNS. [Details](#Step6)
 7. Configure BGP to run on top of the IPsec tunnels and establish connectivity between the two parties. This is done using FRR, Free Range Routing which provides a solution for routing protocol implementations, in our case BGP. This is how we are configuring dynamic routing between the networks. FRR exchanges routing information with other routers in the network, enabling efficient and dynamic route propagation. [Details](#Step7)
 8. Once the BGP configuration is done we can ping each other from both sides. [Details](#Step8)
-9. Clean up by deleting the resources in order and finally deleting the CF stack. 
+9. Clean up by deleting the resources in order and finally deleting the CF stack. [Details](#Step9)
+10. Summary & What I learned. [Details](#summary)
 
 # Detailed implementation steps:
 # Step1: 
@@ -89,19 +93,25 @@ Log on to On Prem server and ping VPC EC2:
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/pingOnPremFromVPC.png) 
 
 Repeat Step 7 to install FRR on Router 2 and configure BGP. Verify that the ping is working. 
+# Step 9: 
+Cleanup:  
+Delete VPN Connections
+![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/deleteVPNConnection.png) 
 
+Delete Customer Gateways
+![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/deleteCustomerGateway.png) 
 
+## Summary<a name="summary"></a>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+**What did I learn?**  
+1. Implemented a complex architecture with IPSec Tunnels between AWS and a simulated on prem environment.
+2. Read up on Strongswan suite and RRR which are opensource VPN and BGP solutions respectively. This should come in handy in real projects.
+3. Used Transit Gateway with attachments. Used BGP to dynamically exchange routes between the customer router and the Transit gateway.
+4. We have true High availability with 2 pairs of tunnels between the customer and AWS. 
+ 
+**Mistakes, gotchas**  
+1. I had to wait a long time to get the IPSEC tunnels up. I started wondering if I made a mistake, Eventually they came up.
+2. It took a long time for BGP to propagate. I started wondering if I should tear it down and redo it but it propagated eventually.  
+ 
+**TODO?**  
+1. More networking and DNS projects. 
