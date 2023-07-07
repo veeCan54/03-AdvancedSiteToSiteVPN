@@ -101,6 +101,8 @@ Delete VPN Connections
 Delete Customer Gateways
 ![Alt text](https://github.com/veeCan54/03-AdvancedSiteToSiteVPN/blob/main/images/deleteCustomerGateway.png) 
 
+Delete CloudFormation stack.
+
 ## Summary<a name="summary"></a>
 
 **What did I learn?**  
